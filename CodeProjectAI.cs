@@ -33,7 +33,7 @@ namespace Log2Metric.CodeProjectAI
 
             Backlog.Set(requestTimes.Count);
 
-            if (msg.StartsWith("Trace Client request"))
+            if (msg.Contains("Trace Client request"))
             {
                 Console.WriteLine("Got a client request");
                 // got message to put onto queue
@@ -48,14 +48,14 @@ namespace Log2Metric.CodeProjectAI
                 TotalRequests.Inc();
                 requestTimes.Add(match.Groups[2].Value, Requests.WithLabels(match.Groups[1].Value).NewTimer());
             }
-            else if (msg.StartsWith("Trace Request"))
+            else if (msg.Contains("Trace Request"))
             {
                 // off internal queue
                 // Trace Request 'detect' dequeued from 'objectdetection_queue' (#reqid 3c22f55a-b1e3-4c8d-80b8-ac518192d570)
 
                 //var match = Regex.Match(msg, "dequeued from '(.*)' \\(#reqid (.+)\\)$");
             }
-            else if (msg.StartsWith("Infor Response rec'd"))
+            else if (msg.Contains("Infor Response rec'd"))
             {
                 // work completed
                 var match = Regex.Match(msg, ".+\\(#reqid (.+)\\) \\['(.*)']\\s+took (\\d+)ms");

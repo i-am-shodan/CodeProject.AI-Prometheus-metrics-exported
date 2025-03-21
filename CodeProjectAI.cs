@@ -20,6 +20,8 @@ namespace Log2Metric.CodeProjectAI
             LabelNames = new[] { "objects" }
         });
 
+        private static readonly Gauge DetectionTimeGauge = Metrics.CreateGauge("codeproject_ai_detect_time_latest", "The number of requests recieved.");
+
         private static readonly Gauge Backlog = Metrics.CreateGauge("codeproject_ai_req_backlog", "Number of waiting requestd.");
 
         private static Dictionary<string, IDisposable> requestTimes = new();
@@ -74,6 +76,8 @@ namespace Log2Metric.CodeProjectAI
 
                 var foundObjs = match.Groups[2].Value;
                 var objs = foundObjs == "No objects found" || string.IsNullOrWhiteSpace(foundObjs) ? "None" : foundObjs.Replace("Found ", "");
+
+                DetectionTimeGauge.Set(int.Parse(match.Groups[3].Value));
 
                 // Infor Response rec'd from Object Detection (Coral) command 'detect' (#reqid d7b19507-0c9e-4534-96d3-19fd6590dab4) ['No objects found']  took 13ms
                 foreach (var obj in objs.Split(",", StringSplitOptions.RemoveEmptyEntries))

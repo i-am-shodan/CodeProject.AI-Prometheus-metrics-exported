@@ -9,9 +9,10 @@ namespace Log2Metric
         private readonly DockerClient client;
         private readonly Task readLogs;
 
-        public DockerContainerLogStream(string containerName)
+        public DockerContainerLogStream(string containerName, ILogger<DockerContainerLogStream> logger)
         {
             client = new DockerClientConfiguration().CreateClient();
+            logger.LogInformation("Docker client created");
 
             readLogs = new Task(async () =>
             {
@@ -21,10 +22,12 @@ namespace Log2Metric
                         Limit = 100,
                     }
                 );
+                logger.LogInformation("Containers listed");
 
                 foreach (var container in containers) {
                     if (container.Names.Any(x => x == "/" +containerName))
                     {
+                        logger.LogInformation($"Found container named {containerName}");
                         var logStream = await client.Containers.GetContainerLogsAsync(
                             container.ID,
                             true,
@@ -35,18 +38,20 @@ namespace Log2Metric
                                 ShowStdout = true,
                             });
 
-                        await ReadOutputAsync( logStream );
+                        await ReadOutputAsync( logStream, logger );
                     }
                 }
+                logger.LogError("Stopped reading");
                 throw new Exception("Container not found");
             });
             readLogs.Start();
         }
 
-        private static async Task ReadOutputAsync(MultiplexedStream multiplexedStream, CancellationToken cancellationToken = default)
+        private static async Task ReadOutputAsync(MultiplexedStream multiplexedStream, ILogger<DockerContainerLogStream> logger, CancellationToken cancellationToken = default)
         {
             byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(81920);
             StringBuilder stringBuilder = new StringBuilder();
+            bool emittedLogMsg = false;
 
             while (true)
             {
@@ -67,6 +72,12 @@ namespace Log2Metric
                     var index = stringBuilder.ToString().IndexOf('\n');
                     while (index != -1)
                     {
+                        if (!emittedLogMsg)
+                        {
+                            logger.LogInformation("Successfully read container output");
+                            emittedLogMsg = true;
+                        }
+
                         CodeProjectAI.CodeProjectAI.ParseLogMessage(stringBuilder.ToString().Substring(0, index).Trim());
                         stringBuilder = stringBuilder.Remove(0, index+1);
 

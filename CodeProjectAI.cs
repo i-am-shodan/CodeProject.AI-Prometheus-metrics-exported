@@ -35,6 +35,7 @@ namespace Log2Metric.CodeProjectAI
 
             if (msg.StartsWith("Trace Client request"))
             {
+                Console.WriteLine("Got a client request");
                 // got message to put onto queue
                 // Trace Client request 'detect' in queue 'objectdetection_queue' (#reqid 3c22f55a-b1e3-4c8d-80b8-ac518192d570)
 
@@ -79,6 +80,10 @@ namespace Log2Metric.CodeProjectAI
                 {
                     DetectionTime.WithLabels(obj.Trim()).Observe(int.Parse(match.Groups[3].Value));
                 }
+            }
+            else
+            {
+                Console.WriteLine("Error processing - " + msg);
             }
         }
     }
